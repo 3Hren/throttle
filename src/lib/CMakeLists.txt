@@ -5,10 +5,15 @@ SET(CMAKE_BUILD_TYPE "Debug")
 SET(PROJECT hurl)
 
 SET(HEADERS
+    utils.hpp
+    timer.hpp
+    watcher.hpp
+    network_request.hpp
     HttpRequestManager.hpp
 )
 
 SET(SOURCES
+    network_request.cpp
     HttpRequestManager.cpp
 )
 
@@ -31,6 +36,7 @@ TARGET_LINK_LIBRARIES(${PROJECT}
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_LIBRARIES}
     curl
+    ev
 )
 
 SET_TARGET_PROPERTIES(${PROJECT} PROPERTIES ENABLE_EXPORTS true)

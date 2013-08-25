@@ -8,5 +8,5 @@
 
 using namespace ::testing;
 
-
+#include "network_request.hpp"
 #include "HttpRequestManager.hpp"

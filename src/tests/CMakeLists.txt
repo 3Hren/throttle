@@ -11,6 +11,7 @@ SET(HEADERS
 
 SET(SOURCES
     main.cpp
+    test_NetworkRequest.cpp
     test_AsyncRequest.cpp
 )
 
@@ -34,6 +35,7 @@ TARGET_LINK_LIBRARIES(${PROJECT}
     ${Boost_LIBRARIES}
     ${GOOGLE_LIBRARIES}
     hurl
+    ev
 )
 
 ADD_DEFINITIONS(-std=c++11)
