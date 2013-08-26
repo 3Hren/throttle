@@ -2,19 +2,25 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 SET(CMAKE_BUILD_TYPE "Debug")
 
-SET(PROJECT hurl)
+SET(PROJECT throttle)
 
 SET(HEADERS
     utils.hpp
-    timer.hpp
-    watcher.hpp
-    network_request.hpp
-    HttpRequestManager.hpp
+    event/timer.hpp
+    event/watcher.hpp
+    event/provider/ev.hpp
+    network/http/connection/info.hpp
+    network/http/callbacks.hpp
+    network/http/header.hpp
+    network/http/request.hpp
+    network/http/reply.hpp
+    network/http/manager.hpp
 )
 
 SET(SOURCES
-    network_request.cpp
-    HttpRequestManager.cpp
+    network/http/connection/info.cpp
+    network/http/request.cpp
+    network/http/manager.cpp
 )
 
 SET(BOOST_COMPONENTS
@@ -24,6 +30,8 @@ SET(BOOST_COMPONENTS
 PROJECT($PROJECT)
 
 FIND_PACKAGE(Boost COMPONENTS ${BOOST_COMPONENTS} REQUIRED)
+
+INCLUDE_DIRECTORIES(.)
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 

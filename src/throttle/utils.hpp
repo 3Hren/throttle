@@ -5,6 +5,8 @@
 
 #include <boost/format.hpp>
 
+#include "config.hpp"
+
 void LogMessage(boost::format &message) {
     std::cout << message.str() << std::endl;
 }
@@ -21,7 +23,7 @@ void LogMessage(const std::string &format, Args&&... args) {
     LogMessage(message, std::forward<Args>(args)...);
 }
 
-#ifdef HURL_DEBUG
+#ifdef THROTTLE_DEBUG
 #define LOG_DEBUG(__format, __args...) \
     do { \
         boost::format __message("%s(%d) -- %s"); \

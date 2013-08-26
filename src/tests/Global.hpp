@@ -8,5 +8,9 @@
 
 using namespace ::testing;
 
-#include "network_request.hpp"
-#include "HttpRequestManager.hpp"
+#include "event/provider/ev.hpp"
+#include "network/http/request.hpp"
+#include "network/http/manager.hpp"
+
+using namespace throttle::network::http;
+using namespace throttle::event::provider;

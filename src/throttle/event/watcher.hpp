@@ -2,12 +2,16 @@
 
 #include <ev++.h>
 
-struct EvProvider;
+namespace throttle { namespace event {
+
+namespace provider {
+struct Ev;
+}
 
 template<typename T> struct Watcher;
 
 template<>
-struct Watcher<EvProvider> {
+struct Watcher<event::provider::Ev> {
     ev::io watcher;
     const std::function<void(int, int)> callback;
 
@@ -33,3 +37,5 @@ struct Watcher<EvProvider> {
             watcher.start();
     }
 };
+
+} }

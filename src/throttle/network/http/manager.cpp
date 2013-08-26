@@ -1,12 +1,27 @@
 #include <functional>
 
-#include <boost/format.hpp>
-
 #include "utils.hpp"
-#include "watcher.hpp"
-#include "HttpRequestManager.hpp"
+#include "event/watcher.hpp"
+#include "request.hpp"
+#include "manager.hpp"
+#include "connection/info.hpp"
 
 using namespace std::placeholders;
+
+using namespace throttle::event;
+using namespace throttle::network::http;
+
+namespace helpers {
+
+std::string trimmed(const char *begin, const char *end) {
+    while (begin < end && isspace(*begin))
+        ++begin;
+    while (begin < end && isspace(*(end - 1)))
+        --end;
+    return std::string(begin, end);
+}
+
+}
 
 template<typename T>
 class HttpRequestManager<T>::HttpRequestManagerImpl {
@@ -36,14 +51,15 @@ public:
         curl_multi_cleanup(multi);
     }
 
-    void get(const std::string &url, const HttpRequestManager::Callback &callback) const {
-        ConnectionInfo *info = new ConnectionInfo(url, callback);
+    void get(const NetworkRequest &request, const Callbacks &callbacks) const {
+        connection::Info *info = new connection::Info(request, callbacks);
 
-        curl_easy_setopt(info->easy, CURLOPT_URL, info->url.c_str());
+        curl_easy_setopt(info->easy, CURLOPT_URL, request.getUrl().c_str());
         curl_easy_setopt(info->easy, CURLOPT_NOSIGNAL, 1L);
+        curl_easy_setopt(info->easy, CURLOPT_NOPROGRESS, 1L);
 
-        struct curl_slist *headers = nullptr;
-        curl_easy_setopt(info->easy, CURLOPT_HTTPHEADER, headers);
+        struct curl_slist *rawHeaders = packHeaders(request.getHeaders());
+        curl_easy_setopt(info->easy, CURLOPT_HTTPHEADER, rawHeaders);
 
         curl_easy_setopt(info->easy, CURLOPT_HEADERFUNCTION, HttpRequestManagerImpl::headerCallback);
         curl_easy_setopt(info->easy, CURLOPT_HEADERDATA, info);
@@ -54,8 +70,24 @@ public:
 
         CURLMcode code = curl_multi_add_handle(multi, info->easy);
         if (code != CURLM_OK) {
-            callback(HttpReply());
+            callbacks.onFinished(HttpReply());
         }
+    }
+
+private:
+    struct curl_slist *packHeaders(const std::unordered_map<std::string, std::string> &headers) const {
+        struct curl_slist *rawHeaders = nullptr;
+        for (auto it = headers.begin(); it != headers.end(); ++it) {
+            const std::string &name = it->first;
+            const std::string &value = it->second;
+            std::string rawHeader;
+            rawHeader.reserve(name.size() + 1 + value.size());
+            rawHeader += name;
+            rawHeader += ":";
+            rawHeader += value;
+            rawHeaders = curl_slist_append(rawHeaders, rawHeader.c_str());
+        }
+        return rawHeaders;
     }
 
     void onEvent(int sockfd, int events) {
@@ -93,13 +125,13 @@ public:
             if (message->msg == CURLMSG_DONE) {
                 CURL *easy = message->easy_handle;
                 CURLcode code = message->data.result;
-                ConnectionInfo *info = nullptr;
+                connection::Info *info = nullptr;
                 char *effectiveUrl = nullptr;
                 curl_easy_getinfo(easy, CURLINFO_PRIVATE, &info);
                 curl_easy_getinfo(easy, CURLINFO_EFFECTIVE_URL, &effectiveUrl);
                 LOG_DEBUG("Done! Code: %d", code);
                 info->reply.body = info->data.str();
-                info->callback(std::move(info->reply));
+                info->callbacks.onFinished(std::move(info->reply));
                 curl_multi_remove_handle(multi, easy);
                 delete info;
             }
@@ -107,39 +139,39 @@ public:
     }
 
     //! [CURLMOPT_SOCKETFUNCTION]
-    static int onMultiSocketCallback(CURL *easy, curl_socket_t sockfd, int action, HttpRequestManagerImpl *manager, Watcher<T> *io) {
+    static int onMultiSocketCallback(CURL *easy, curl_socket_t sockfd, int action, HttpRequestManagerImpl *manager, Watcher<T> *watcher) {
         LOG_DEBUG("fd: %d, event: %d", sockfd, action);
 
         if (action == CURL_POLL_REMOVE) {
-            unwatchSocket(io, manager);
+            unwatchSocket(watcher, manager);
         } else {
-            if (!io) {
-                watchSocket(sockfd, io, action, manager);
+            if (!watcher) {
+                watchSocket(sockfd, watcher, action, manager);
             } else {
-                updateSocket(sockfd, io, action, manager);
+                updateSocket(sockfd, watcher, action, manager);
             }
         }
 
         return 0;
     }
 
-    static void watchSocket(curl_socket_t sockfd, Watcher<T> *io, int action, HttpRequestManagerImpl *manager) {
+    static void watchSocket(curl_socket_t sockfd, Watcher<T> *watcher, int action, HttpRequestManagerImpl *manager) {
         LOG_DEBUG("fd: %d", sockfd);
-        io = new Watcher<T>(manager->loop, std::bind(&HttpRequestManagerImpl::onEvent, manager, _1, _2));
-        curl_multi_assign(manager->multi, sockfd, io);
-        updateSocket(sockfd, io, action, manager);
+        watcher = new Watcher<T>(manager->loop, std::bind(&HttpRequestManagerImpl::onEvent, manager, _1, _2));
+        curl_multi_assign(manager->multi, sockfd, watcher);
+        updateSocket(sockfd, watcher, action, manager);
     }
 
-    static void unwatchSocket(Watcher<T> *io, HttpRequestManagerImpl *manager) {
-        LOG_DEBUG("fd: %d", io->fd());
-        if (io) {
-            delete io;
+    static void unwatchSocket(Watcher<T> *watcher, HttpRequestManagerImpl *manager) {
+        LOG_DEBUG("fd: %d", watcher->fd());
+        if (watcher) {
+            delete watcher;
         }
     }
 
-    static void updateSocket(curl_socket_t sockfd, Watcher<T> *io, int events, HttpRequestManagerImpl *manager) {
+    static void updateSocket(curl_socket_t sockfd, Watcher<T> *watcher, int events, HttpRequestManagerImpl *manager) {
         LOG_DEBUG("fd: %d, action: %d", sockfd, events);
-        io->process_events(sockfd, events);
+        watcher->process_events(sockfd, events);
     }
 
     //! [CURLMOPT_TIMERFUNCTION]
@@ -149,17 +181,42 @@ public:
     }
 
     //! [CURLOPT_WRITEFUNCTION]
-    static size_t writeCallback(char *data, size_t size, size_t nmemb, ConnectionInfo *info) {
-        LOG_DEBUG("size: %d, nmemb: %d, url %s", size, nmemb, info->url);
+    static size_t writeCallback(char *data, size_t size, size_t nmemb, connection::Info *info) {
+        LOG_DEBUG("size: %d, nmemb: %d", size, nmemb);
         const size_t written = size * nmemb;
         info->data.write(data, written);
+        if (info->callbacks.onBody) {
+            info->callbacks.onBody(data, written);
+        }
         return written;
     }
 
     //! [CURLOPT_HEADERFUNCTION]
-    static size_t headerCallback(char *data, size_t size, size_t nmemb, ConnectionInfo *info) {
+    static size_t headerCallback(char *data, size_t size, size_t nmemb, connection::Info *info) {
         LOG_DEBUG("size: %d, nmemb: %d", size, nmemb);
         const size_t written = size * nmemb;
+
+        char *lf;
+        char *end = data + written;
+        char *colon = std::find(data, end, ':');
+
+        if (colon != end) {
+            const std::string field = helpers::trimmed(data, colon);
+            std::string value;
+
+            data = colon + 1;
+            do {
+                lf = std::find(data, end, '\n');
+                if (!value.empty())
+                    value += ' ';
+
+                value += helpers::trimmed(data, lf);
+                data = lf;
+            } while (data < end && (*(data + 1) == ' ' || *(data + 1) == '\t'));
+
+            info->reply.setHeader({field, value});
+        }
+
         return written;
     }
 };
@@ -176,9 +233,16 @@ HttpRequestManager<T>::~HttpRequestManager()
 }
 
 template<typename T>
-void HttpRequestManager<T>::get(const std::string &url, const HttpRequestManager::Callback &callback) const
+void HttpRequestManager<T>::get(const NetworkRequest &request, const Callbacks::OnFinished &callback) const
 {
-    d->get(url, callback);
+    get(request, Callbacks(callback));
 }
 
-template class HttpRequestManager<EvProvider>;
+template<typename T>
+void HttpRequestManager<T>::get(const NetworkRequest &request, const Callbacks &callbacks) const
+{
+    d->get(request, callbacks);
+}
+
+#include "event/provider/ev.hpp"
+template class throttle::network::http::HttpRequestManager<throttle::event::provider::Ev>;
