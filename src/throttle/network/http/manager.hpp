@@ -1,6 +1,7 @@
 #pragma once
 
 #include <list>
+#include <future>
 
 #include "callbacks.hpp"
 #include "reply.hpp"
@@ -19,6 +20,8 @@ public:
 
     void get(const NetworkRequest &request, const Callbacks::OnFinished &callback) const;
     void get(const NetworkRequest &request, const Callbacks &callbacks) const;
+
+    std::future<NetworkReply> get(const NetworkRequest &request) const;
 
     void post(const NetworkRequest &request, const std::string &data, const Callbacks &callbacks) const;
 

@@ -36,6 +36,11 @@ void HttpRequestManager<T>::get(const NetworkRequest &request, const Callbacks &
 }
 
 template<typename T>
+std::future<NetworkReply> HttpRequestManager<T>::get(const NetworkRequest &request) const
+{
+}
+
+template<typename T>
 void HttpRequestManager<T>::post(const NetworkRequest &request, const std::string &data, const Callbacks &callbacks) const
 {
     d->post(request, data, callbacks);

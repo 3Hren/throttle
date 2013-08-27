@@ -6,11 +6,11 @@
 
 namespace throttle { namespace network { namespace http {
 
-struct HttpReply;
+struct NetworkReply;
 struct Callbacks {
     typedef std::function<void(const Header &header)> OnHeader;
     typedef std::function<void(const char *body, const size_t size)> OnBody;
-    typedef std::function<void(HttpReply&&)> OnFinished;
+    typedef std::function<void(NetworkReply&&)> OnFinished;
 
     OnHeader onHeader;
     OnBody onBody;

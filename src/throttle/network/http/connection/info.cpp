@@ -33,7 +33,7 @@ void Info::send(CURLM *multi) const {
     if (code != CURLM_OK) {
         LOG_DEBUG("sending request failed - %d", code);
         if (callbacks.onFinished) {
-            callbacks.onFinished(HttpReply());
+            callbacks.onFinished(NetworkReply());
         }
     }
 }

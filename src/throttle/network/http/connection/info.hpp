@@ -20,7 +20,7 @@ struct Info {
     std::string data;
 
     std::stringstream bodyStream;
-    HttpReply reply;
+    NetworkReply reply;
 
     Info(const NetworkRequest &request, const Callbacks &callbacks);
     ~Info();

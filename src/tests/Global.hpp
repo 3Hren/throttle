@@ -15,6 +15,7 @@ using namespace ::testing;
 
 #include "event/provider/ev.hpp"
 #include "network/http/request.hpp"
+#include "network/http/reply.hpp"
 #include "network/http/manager.hpp"
 
 using namespace throttle::network::http;

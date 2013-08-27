@@ -5,9 +5,10 @@ TEST(Test, Manual) {
     Ev provider{ loop };
 
     HttpRequestManager<Ev> manager(provider);
-    for (int i = 0; i < 10; ++i)
-        manager.get("http://httpbin.org/delay/1", [i](HttpReply&& reply){
-            std::cout << "=== Response received: " << i << std::endl;
-        });
+    std::vector<std::future<NetworkReply>> futures;
+    for (int i = 0; i < 10; ++i) {
+        auto f = manager.get("http://httpbin.org/delay/1");
+        futures.push_back(std::move(f));
+    }
     loop.run();
 }

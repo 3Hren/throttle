@@ -7,12 +7,12 @@
 
 namespace throttle { namespace network { namespace http {
 
-struct HttpReply {
+struct NetworkReply {
     std::list<Header> headers;
     std::string body;
 
-    HttpReply() = default;
-    HttpReply(HttpReply &&other) :
+    NetworkReply() = default;
+    NetworkReply(NetworkReply &&other) :
         headers(std::move(other.headers)),
         body(std::move(other.body))
     {}
