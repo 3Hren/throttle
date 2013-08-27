@@ -1,4 +1,9 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #define THROTTLE_VERSION_MAJOR   0
 #define THROTTLE_VERSION_MINOR   0
-#define THROTTLE_VERSION_PATCH   2
-#define THROTTLE_DEBUG
+#define THROTTLE_VERSION_PATCH   3
+/* #undef THROTTLE_DEBUG */
+
+#endif // CONFIG_H

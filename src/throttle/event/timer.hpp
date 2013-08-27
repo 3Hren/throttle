@@ -11,10 +11,11 @@ struct Ev;
 template<typename T> struct Timer;
 
 template<>
-struct Timer<event::provider::Ev> {
+class Timer<event::provider::Ev> {
     ev::timer timer;
     const std::function<void(int)> callback;
 
+public:
     Timer(ev::loop_ref &loop, const std::function<void(int)>& callback) :
         timer(loop),
         callback(callback)

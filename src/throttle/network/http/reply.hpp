@@ -32,6 +32,10 @@ struct HttpReply {
     void setHeader(const Header &header) {
         headers.emplace_back(header);
     }
+
+    void setHeader(Header &&header) {
+        headers.emplace_back(std::forward<Header>(header));
+    }
 };
 
 } } }

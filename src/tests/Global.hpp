@@ -3,6 +3,11 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <ev++.h>
+#include <boost/format.hpp>
+#include <boost/asio.hpp>
+#include <rapidjson/document.h>
+
 #define UNUSED(T) \
     (void)T;
 

@@ -11,10 +11,11 @@ struct Ev;
 template<typename T> struct Watcher;
 
 template<>
-struct Watcher<event::provider::Ev> {
+class Watcher<event::provider::Ev> {
     ev::io watcher;
     const std::function<void(int, int)> callback;
 
+public:
     Watcher(ev::loop_ref &loop, const std::function<void(int, int)>& callback) :
         watcher(loop),
         callback(callback)

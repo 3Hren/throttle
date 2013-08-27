@@ -13,3 +13,10 @@ int main(int argc, char *argv[]) {
  * minimum dependencies
  * convenient
  */
+
+/*!
+ * 1. raw callbacks
+ * 2. futures (async).  get - block.
+ * 3. deferred (async). addCallback - attach own callbacks.
+ *                      then - add callback to the pipeline
+ */

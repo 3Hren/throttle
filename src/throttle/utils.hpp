@@ -7,7 +7,10 @@
 
 #include "config.hpp"
 
-void LogMessage(boost::format &message) {
+#define UNUSED(T) \
+    (void)T;
+
+inline void LogMessage(boost::format &message) {
     std::cout << message.str() << std::endl;
 }
 
@@ -33,3 +36,15 @@ void LogMessage(const std::string &format, Args&&... args) {
 #else
 #define LOG_DEBUG(__format, __args...)
 #endif
+
+namespace helpers {
+
+inline std::string trimmed(const char *begin, const char *end) {
+    while (begin < end && isspace(*begin))
+        ++begin;
+    while (begin < end && isspace(*(end - 1)))
+        --end;
+    return std::string(begin, end);
+}
+
+}

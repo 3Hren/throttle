@@ -15,6 +15,7 @@ SET(HEADERS
     network/http/request.hpp
     network/http/reply.hpp
     network/http/manager.hpp
+    network/http/manager_p.hpp
 )
 
 SET(SOURCES

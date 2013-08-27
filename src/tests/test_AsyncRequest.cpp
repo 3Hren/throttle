@@ -1,10 +1,3 @@
-#include <ev++.h>
-
-#include <boost/format.hpp>
-#include <boost/asio.hpp>
-
-#include <rapidjson/document.h>
-
 #include "Mocks.hpp"
 
 TEST(HttpRequestManager, Class) {
@@ -72,6 +65,47 @@ TEST(HttpRequestManager, UnpackHeaders) {
         EXPECT_STREQ("123", reply.getHeader("X-My-Header").c_str());
         completed = true;
     });
+    loop.run();
+    EXPECT_TRUE(completed);
+}
+
+TEST(HttpRequestManager, Post) {
+    ev::default_loop loop;
+    Ev provider{ loop };
+
+    const std::string data("{\"data\": 123}");
+    bool completed = false;
+    HttpRequestManager<Ev> manager(provider);
+    NetworkRequest request("http://httpbin.org/post");
+    manager.post(request, data, {[&completed, &data](HttpReply&& reply){
+        rapidjson::Document d;
+        std::cout << reply.body << std::endl;
+        d.Parse<0>(reply.body.c_str());
+        ASSERT_FALSE(d.HasParseError());
+        EXPECT_TRUE(d.HasMember("data"));
+        std::string actual = d["data"].GetString();
+        EXPECT_STREQ(data.c_str(), actual.c_str());
+        completed = true;
+    }});
+    loop.run();
+    EXPECT_TRUE(completed);
+}
+
+TEST(HttpRequestManager, Delete) {
+    ev::default_loop loop;
+    Ev provider{ loop };
+
+    const std::string data("{\"data\": 123}");
+    bool completed = false;
+    HttpRequestManager<Ev> manager(provider);
+    NetworkRequest request("http://httpbin.org/delete");
+    manager.deleteResource(request, {[&completed, &data](HttpReply&& reply){
+        rapidjson::Document d;
+        std::cout << reply.body << std::endl;
+        d.Parse<0>(reply.body.c_str());
+        ASSERT_FALSE(d.HasParseError());
+        completed = true;
+    }});
     loop.run();
     EXPECT_TRUE(completed);
 }

@@ -19,6 +19,10 @@ struct Callbacks {
     Callbacks(const OnFinished &onFinished) :
         onFinished(onFinished)
     {}
+
+    Callbacks(OnFinished &&onFinished) :
+        onFinished(std::move(onFinished))
+    {}
 };
 
 } } }
