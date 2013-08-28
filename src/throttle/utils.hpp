@@ -48,6 +48,7 @@ inline std::string trimmed(const char *begin, const char *end) {
         ++begin;
     while (begin < end && isspace(*(end - 1)))
         --end;
+
     return std::string(begin, end);
 }
 

@@ -10,6 +10,7 @@
 
 namespace throttle { namespace network { namespace http {
 
+typedef std::shared_ptr<throttle::async::Deferred<NetworkReply>> DeferredNetworkReply;
 class NetworkRequest;
 
 template<typename T>
@@ -22,7 +23,7 @@ public:
 
     void get(const NetworkRequest &request, const Callbacks::OnFinished &callback) const;
     void get(const NetworkRequest &request, const Callbacks &callbacks) const;
-    std::shared_ptr<throttle::async::Deferred<NetworkReply>> get(const NetworkRequest &request) const;
+    DeferredNetworkReply get(const NetworkRequest &request) const;
 
     void post(const NetworkRequest &request, const std::string &data, const Callbacks &callbacks) const;
 

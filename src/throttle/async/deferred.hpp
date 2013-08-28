@@ -5,14 +5,20 @@
 #include <functional>
 #include <mutex>
 
+#include "utils.hpp"
+
 namespace throttle { namespace async {
 
 template<typename R>
 class Deferred {
+    DECLARE_NONCOPYABLE(Deferred)
+
     std::vector<std::function<void(const R &reply)>> callbacks;
     std::list<R> cache;
     std::mutex mutex;
 public:
+    Deferred() = default;
+
     template<typename C>
     void addCallback(const C &callback) {
         std::unique_lock<std::mutex> lock(mutex);

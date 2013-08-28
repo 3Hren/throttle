@@ -186,7 +186,6 @@ private:
         LOG_DEBUG("fd: %d", watcher->fd());
         if (watcher) {
             delete watcher;
-            watcher = nullptr;
         }
     }
 

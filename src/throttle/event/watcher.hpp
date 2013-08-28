@@ -2,6 +2,8 @@
 
 #include <ev++.h>
 
+#include "utils.hpp"
+
 namespace throttle { namespace event {
 
 namespace provider {
@@ -12,6 +14,8 @@ template<typename T> struct Watcher;
 
 template<>
 class Watcher<event::provider::Ev> {
+    DECLARE_NONCOPYABLE(Watcher)
+
     ev::io watcher;
     const std::function<void(int, int)> callback;
 

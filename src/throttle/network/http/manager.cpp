@@ -43,9 +43,9 @@ void HttpRequestManager<T>::get(const NetworkRequest &request, const Callbacks &
 }
 
 template<typename T>
-std::shared_ptr<throttle::async::Deferred<NetworkReply>> HttpRequestManager<T>::get(const NetworkRequest &request) const
+DeferredNetworkReply HttpRequestManager<T>::get(const NetworkRequest &request) const
 {
-    std::shared_ptr<throttle::async::Deferred<NetworkReply>> deferred(std::make_shared<throttle::async::Deferred<NetworkReply>>());
+    DeferredNetworkReply deferred(std::make_shared<throttle::async::Deferred<NetworkReply>>());
     ReplyRedirectAction action{ deferred };
     get(request, action);
     return deferred;

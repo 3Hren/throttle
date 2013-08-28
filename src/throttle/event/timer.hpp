@@ -2,6 +2,8 @@
 
 #include <ev++.h>
 
+#include "utils.hpp"
+
 namespace throttle { namespace event {
 
 namespace provider {
@@ -12,6 +14,8 @@ template<typename T> struct Timer;
 
 template<>
 class Timer<event::provider::Ev> {
+    DECLARE_NONCOPYABLE(Timer)
+
     ev::timer timer;
     const std::function<void(int)> callback;
 

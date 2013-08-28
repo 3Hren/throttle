@@ -14,8 +14,8 @@ Info::Info(const NetworkRequest &request, const Callbacks &callbacks):
     curl_easy_setopt(easy, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(easy, CURLOPT_NOPROGRESS, 1L);
 
-    struct curl_slist *rawHeaders = packHeaders(request.getHeaders());
-    curl_easy_setopt(easy, CURLOPT_HTTPHEADER, rawHeaders);
+    struct curl_slist *curl_headers = packHeaders(request.getHeaders());
+    curl_easy_setopt(easy, CURLOPT_HTTPHEADER, curl_headers);
 
     curl_easy_setopt(easy, CURLOPT_HEADERFUNCTION, headerCallback);
     curl_easy_setopt(easy, CURLOPT_HEADERDATA, this);
@@ -83,16 +83,18 @@ size_t Info::headerCallback(char *data, size_t size, size_t nmemb, Info *info) {
 }
 
 curl_slist *Info::packHeaders(const std::unordered_map<std::string, std::string> &headers) const {
-    struct curl_slist *rawHeaders = nullptr;
+    struct curl_slist *curl_headers = nullptr;
     for (auto it = headers.begin(); it != headers.end(); ++it) {
-        const std::string &name = it->first;
-        const std::string &value = it->second;
-        std::string rawHeader;
-        rawHeader.reserve(name.size() + 1 + value.size());
-        rawHeader += name;
-        rawHeader += ":";
-        rawHeader += value;
-        rawHeaders = curl_slist_append(rawHeaders, rawHeader.c_str());
+        addHeader(it->first, it->second, &curl_headers);
     }
-    return rawHeaders;
+    return curl_headers;
+}
+
+void Info::addHeader(const std::string &name, const std::string &value, struct curl_slist **curl_headers) const {
+    std::string rawHeader;
+    rawHeader.reserve(name.size() + 2 + value.size());
+    rawHeader += name;
+    rawHeader += ": ";
+    rawHeader += value;
+    *curl_headers = curl_slist_append(*curl_headers, rawHeader.c_str());
 }
