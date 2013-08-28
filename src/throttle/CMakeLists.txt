@@ -6,6 +6,7 @@ SET(PROJECT throttle)
 
 SET(HEADERS
     utils.hpp
+    async/deferred.hpp
     event/timer.hpp
     event/watcher.hpp
     event/provider/ev.hpp
@@ -21,6 +22,7 @@ SET(HEADERS
 SET(SOURCES
     network/http/connection/info.cpp
     network/http/request.cpp
+    network/http/reply.cpp
     network/http/manager.cpp
 )
 

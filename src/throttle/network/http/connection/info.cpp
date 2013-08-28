@@ -1,3 +1,5 @@
+#include <boost/algorithm/string.hpp>
+
 #include "info.hpp"
 
 using namespace throttle::network::http;

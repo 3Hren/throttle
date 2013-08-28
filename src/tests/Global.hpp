@@ -20,3 +20,6 @@ using namespace ::testing;
 
 using namespace throttle::network::http;
 using namespace throttle::event::provider;
+
+#define TEST_OFF(__case__, __name__) \
+    TEST(__case__, DISABLED_##__name__)

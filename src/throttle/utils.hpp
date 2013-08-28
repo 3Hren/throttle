@@ -7,6 +7,10 @@
 
 #include "config.hpp"
 
+#define DECLARE_NONCOPYABLE(__class__) \
+    __class__(const __class__ &other) = delete; \
+    __class__& operator =(const __class__ &other) = delete;
+
 #define UNUSED(T) \
     (void)T;
 

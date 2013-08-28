@@ -5,10 +5,13 @@ TEST(Test, Manual) {
     Ev provider{ loop };
 
     HttpRequestManager<Ev> manager(provider);
-    std::vector<std::future<NetworkReply>> futures;
+    std::vector<std::shared_ptr<throttle::async::Deferred<NetworkReply>>> vv;
     for (int i = 0; i < 10; ++i) {
-        auto f = manager.get("http://httpbin.org/delay/1");
-        futures.push_back(std::move(f));
+        auto deferred = manager.get("http://httpbin.org/delay/1");
+        deferred->addCallback([i](const NetworkReply &reply){
+            std::cout << i << std::endl;
+        });
+        vv.push_back(deferred);
     }
     loop.run();
 }

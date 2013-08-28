@@ -12,6 +12,13 @@ using namespace std::placeholders;
 using namespace throttle::event;
 using namespace throttle::network::http;
 
+struct ReplyRedirectAction {
+    std::shared_ptr<throttle::async::Deferred<NetworkReply>> deferred;
+    void operator ()(NetworkReply &&reply) {
+        deferred->trigger(std::move(reply));
+    }
+};
+
 template<typename T>
 HttpRequestManager<T>::HttpRequestManager(T &provider) :
     d(new HttpRequestManagerImpl(provider))
@@ -36,8 +43,12 @@ void HttpRequestManager<T>::get(const NetworkRequest &request, const Callbacks &
 }
 
 template<typename T>
-std::future<NetworkReply> HttpRequestManager<T>::get(const NetworkRequest &request) const
+std::shared_ptr<throttle::async::Deferred<NetworkReply>> HttpRequestManager<T>::get(const NetworkRequest &request) const
 {
+    std::shared_ptr<throttle::async::Deferred<NetworkReply>> deferred(std::make_shared<throttle::async::Deferred<NetworkReply>>());
+    ReplyRedirectAction action{ deferred };
+    get(request, action);
+    return deferred;
 }
 
 template<typename T>

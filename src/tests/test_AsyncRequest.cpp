@@ -13,7 +13,7 @@ TEST(HttpRequestManager, SimpleRequestToApache) {
 
     bool completed = false;
     HttpRequestManager<Ev> manager(provider);
-    manager.get("http://localhost", [&completed](HttpReply&& reply){
+    manager.get("http://localhost", [&completed](NetworkReply&& reply){
         EXPECT_STREQ("<html><body><h1>It works!</h1></body></html>", reply.body.c_str());
         completed = true;
     });
@@ -28,7 +28,7 @@ TEST(HttpRequestManager, SimpleRequestToApacheUsingNetworkRequest) {
     bool completed = false;
     HttpRequestManager<Ev> manager(provider);
     NetworkRequest request("http://localhost");
-    manager.get(request, [&completed](HttpReply&& reply){
+    manager.get(request, [&completed](NetworkReply&& reply){
         EXPECT_STREQ("<html><body><h1>It works!</h1></body></html>", reply.body.c_str());
         completed = true;
     });
@@ -44,7 +44,7 @@ TEST(HttpRequestManager, PackHeaders) {
     HttpRequestManager<Ev> manager(provider);
     NetworkRequest request("http://httpbin.org/headers");
     request.setHeader("X-My-Header", "123");
-    manager.get(request, [&completed](HttpReply&& reply){
+    manager.get(request, [&completed](NetworkReply&& reply){
         EXPECT_TRUE(reply.body.find("\"X-My-Header\": \"123\"") != std::string::npos);
         completed = true;
     });
@@ -60,7 +60,7 @@ TEST(HttpRequestManager, UnpackHeaders) {
     bool completed = false;
     HttpRequestManager<Ev> manager(provider);
     NetworkRequest request("http://httpbin.org/response-headers?X-My-Header=123");
-    manager.get(request, [&completed](HttpReply&& reply){
+    manager.get(request, [&completed](NetworkReply&& reply){
         EXPECT_TRUE(reply.hasHeader("X-My-Header"));
         EXPECT_STREQ("123", reply.getHeader("X-My-Header").c_str());
         completed = true;
@@ -77,7 +77,7 @@ TEST(HttpRequestManager, Post) {
     bool completed = false;
     HttpRequestManager<Ev> manager(provider);
     NetworkRequest request("http://httpbin.org/post");
-    manager.post(request, data, {[&completed, &data](HttpReply&& reply){
+    manager.post(request, data, {[&completed, &data](NetworkReply&& reply){
         rapidjson::Document d;
         std::cout << reply.body << std::endl;
         d.Parse<0>(reply.body.c_str());
@@ -99,7 +99,7 @@ TEST(HttpRequestManager, Delete) {
     bool completed = false;
     HttpRequestManager<Ev> manager(provider);
     NetworkRequest request("http://httpbin.org/delete");
-    manager.deleteResource(request, {[&completed, &data](HttpReply&& reply){
+    manager.deleteResource(request, {[&completed, &data](NetworkReply&& reply){
         rapidjson::Document d;
         std::cout << reply.body << std::endl;
         d.Parse<0>(reply.body.c_str());
@@ -115,7 +115,7 @@ TEST(HttpRequestManager, Manual) {
     Ev provider{ loop };
 
     HttpRequestManager<Ev> manager(provider);
-    manager.get("http://www.google.cn", [](HttpReply&& reply){
+    manager.get("http://www.google.cn", [](NetworkReply&& reply){
         std::cout << "=== Response received:" << std::endl;
         for (auto header : reply.headers)
             std::cout << boost::format("%s : %s") % header.name % header.value << std::endl;

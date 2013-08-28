@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <mutex>
 
 #include <curl/curl.h>
 
@@ -22,6 +23,9 @@ struct Get {
     void operator ()(connection::Info *info) {
         UNUSED(info);
     }
+
+private:
+    DECLARE_NONCOPYABLE(Get)
 };
 
 struct Post {
@@ -33,6 +37,9 @@ struct Post {
         info->data = data;
         curl_easy_setopt(info->easy, CURLOPT_POSTFIELDS, info->data.c_str());
     }
+
+private:
+    DECLARE_NONCOPYABLE(Post)
 };
 
 struct Delete {
@@ -42,10 +49,15 @@ struct Delete {
     void operator ()(connection::Info *info) {
         curl_easy_setopt(info->easy, CURLOPT_CUSTOMREQUEST, "DELETE");
     }
+
+private:
+    DECLARE_NONCOPYABLE(Delete)
 };
 
 template<typename T>
 class HttpRequestManager<T>::HttpRequestManagerImpl {
+    DECLARE_NONCOPYABLE(HttpRequestManagerImpl)
+
     typedef typename T::Loop Loop;
     typedef typename T::Timer Timer;
 
@@ -54,7 +66,6 @@ class HttpRequestManager<T>::HttpRequestManagerImpl {
     CURLM *multi;
 
     int still_running;
-
 public:
     HttpRequestManagerImpl(T &provider) :
         loop(provider.loop),
@@ -152,12 +163,12 @@ private:
         LOG_DEBUG("fd: %d, event: %d", sockfd, action);
 
         if (action == CURL_POLL_REMOVE) {
-            unwatchSocket(watcher, manager);
+            unwatchSocket(watcher);
         } else {
             if (!watcher) {
                 watchSocket(sockfd, watcher, action, manager);
             } else {
-                updateSocket(sockfd, watcher, action, manager);
+                updateSocket(sockfd, watcher, action);
             }
         }
 
@@ -168,17 +179,18 @@ private:
         LOG_DEBUG("fd: %d", sockfd);
         watcher = new Watcher<T>(manager->loop, std::bind(&HttpRequestManagerImpl::onEvent, manager, _1, _2));
         curl_multi_assign(manager->multi, sockfd, watcher);
-        updateSocket(sockfd, watcher, action, manager);
+        updateSocket(sockfd, watcher, action);
     }
 
-    static void unwatchSocket(Watcher<T> *watcher, HttpRequestManagerImpl *manager) {
+    static void unwatchSocket(Watcher<T> *watcher) {
         LOG_DEBUG("fd: %d", watcher->fd());
         if (watcher) {
             delete watcher;
+            watcher = nullptr;
         }
     }
 
-    static void updateSocket(curl_socket_t sockfd, Watcher<T> *watcher, int events, HttpRequestManagerImpl *manager) {
+    static void updateSocket(curl_socket_t sockfd, Watcher<T> *watcher, int events) {
         LOG_DEBUG("fd: %d, action: %d", sockfd, events);
         watcher->process_events(sockfd, events);
     }

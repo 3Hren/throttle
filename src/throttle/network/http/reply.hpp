@@ -12,30 +12,13 @@ struct NetworkReply {
     std::string body;
 
     NetworkReply() = default;
-    NetworkReply(NetworkReply &&other) :
-        headers(std::move(other.headers)),
-        body(std::move(other.body))
-    {}
+    NetworkReply(const NetworkReply &other) = default;
+    NetworkReply(NetworkReply &&other);
 
-    bool hasHeader(const std::string &name) const {
-        return std::find_if(headers.begin(), headers.end(), [&name](const Header &header){
-            return header.name == name;
-        }) != headers.end();
-    }
-
-    std::string getHeader(const std::string &name) const {
-        return std::find_if(headers.begin(), headers.end(), [&name](const Header &header){
-            return header.name == name;
-        })->value;
-    }
-
-    void setHeader(const Header &header) {
-        headers.emplace_back(header);
-    }
-
-    void setHeader(Header &&header) {
-        headers.emplace_back(std::forward<Header>(header));
-    }
+    bool hasHeader(const std::string &name) const;
+    std::string getHeader(const std::string &name) const;
+    void setHeader(const Header &header);
+    void setHeader(Header &&header);
 };
 
 } } }
