@@ -17,9 +17,9 @@ Info::Info(const NetworkRequest &request, const Callbacks &callbacks):
     struct curl_slist *curl_headers = packHeaders(request.headers().all());
     curl_easy_setopt(easy, CURLOPT_HTTPHEADER, curl_headers);
 
-    curl_easy_setopt(easy, CURLOPT_HEADERFUNCTION, headerCallback);
+    curl_easy_setopt(easy, CURLOPT_HEADERFUNCTION, onHeader);
     curl_easy_setopt(easy, CURLOPT_HEADERDATA, this);
-    curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, writeCallback);
+    curl_easy_setopt(easy, CURLOPT_WRITEFUNCTION, onBody);
     curl_easy_setopt(easy, CURLOPT_WRITEDATA, this);
 
     curl_easy_setopt(easy, CURLOPT_PRIVATE, this);
@@ -40,7 +40,7 @@ void Info::send(CURLM *multi) const {
     }
 }
 
-size_t Info::writeCallback(char *data, size_t size, size_t nmemb, Info *info) {
+size_t Info::onBody(char *data, size_t size, size_t nmemb, Info *info) {
     LOG_DEBUG("size: %d, nmemb: %d", size, nmemb);
     const size_t written = size * nmemb;
     info->bodyStream.write(data, written);
@@ -50,7 +50,7 @@ size_t Info::writeCallback(char *data, size_t size, size_t nmemb, Info *info) {
     return written;
 }
 
-size_t Info::headerCallback(char *data, size_t size, size_t nmemb, Info *info) {
+size_t Info::onHeader(char *data, size_t size, size_t nmemb, Info *info) {
     LOG_DEBUG("size: %d, nmemb: %d", size, nmemb);
     const size_t written = size * nmemb;
 
@@ -76,13 +76,13 @@ size_t Info::headerCallback(char *data, size_t size, size_t nmemb, Info *info) {
         if (info->callbacks.onHeader) {
             info->callbacks.onHeader(header);
         }
-        info->reply.headers().set(std::move(header));
+        info->headers.push_back(std::move(header));
     }
 
     return written;
 }
 
-curl_slist *Info::packHeaders(const std::list<Header> &headers) const {
+curl_slist *Info::packHeaders(const HeaderList::Container::Type &headers) const {
     struct curl_slist *curl_headers = nullptr;
     for (auto it = headers.begin(); it != headers.end(); ++it) {
         addHeader(it->name, it->value, &curl_headers);

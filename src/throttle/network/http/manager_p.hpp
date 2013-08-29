@@ -148,10 +148,14 @@ private:
                 curl_easy_getinfo(easy, CURLINFO_PRIVATE, &info);
                 curl_easy_getinfo(easy, CURLINFO_EFFECTIVE_URL, &effectiveUrl);
                 LOG_DEBUG("Done! Code: %d", code);
-                info->reply.body = info->bodyStream.str();
+
+                info->reply.setRequest(std::move(info->request));
+                info->reply.headers().reset(std::move(info->headers));
+                info->reply.setBody(info->bodyStream.str());
                 if (info->callbacks.onFinished) {
                     info->callbacks.onFinished(std::move(info->reply));
                 }
+
                 curl_multi_remove_handle(multi, easy);
                 delete info;
             }

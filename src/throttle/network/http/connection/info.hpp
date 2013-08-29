@@ -14,13 +14,14 @@ namespace throttle { namespace network { namespace http { namespace connection {
 struct Info {
     CURL *easy;
 
-    const NetworkRequest request;
-    const Callbacks callbacks;
-
+    NetworkRequest request;
+    Callbacks callbacks;
     std::string data;
-
-    std::stringstream bodyStream;
     NetworkReply reply;
+
+    //! For response collecting.
+    HeaderList::Container::Type headers;
+    std::stringstream bodyStream;
 
     Info(const NetworkRequest &request, const Callbacks &callbacks);
     ~Info();
@@ -28,9 +29,9 @@ struct Info {
     void send(CURLM *multi) const;
 
 private:
-    static size_t writeCallback(char *data, size_t size, size_t nmemb, connection::Info *info);
-    static size_t headerCallback(char *data, size_t size, size_t nmemb, connection::Info *info);
-    struct curl_slist *packHeaders(const std::list<Header> &headers) const;
+    static size_t onBody(char *data, size_t size, size_t nmemb, connection::Info *info);
+    static size_t onHeader(char *data, size_t size, size_t nmemb, connection::Info *info);
+    struct curl_slist *packHeaders(const HeaderList::Container::Type &headers) const;
     void addHeader(const std::string &name, const std::string &value, struct curl_slist **headers) const;
 };
 
