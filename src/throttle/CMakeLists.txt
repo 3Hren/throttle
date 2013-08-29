@@ -21,6 +21,7 @@ SET(HEADERS
 
 SET(SOURCES
     network/http/connection/info.cpp
+    network/http/header.cpp
     network/http/request.cpp
     network/http/reply.cpp
     network/http/manager.cpp

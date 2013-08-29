@@ -43,12 +43,12 @@ TEST(HttpRequestManager, PackHeaders) {
     bool completed = false;
     HttpRequestManager<Ev> manager(provider);
     NetworkRequest request("http://httpbin.org/headers");
-    request.setHeader("X-My-Header", "123");
+    request.headers().set("X-My-Header", "123");
     manager.get(request, [&completed](NetworkReply&& reply){
         EXPECT_TRUE(reply.body.find("\"X-My-Header\": \"123\"") != std::string::npos);
         completed = true;
     });
-    EXPECT_FALSE(request.hasHeader("1"));
+    EXPECT_FALSE(request.headers().has("1"));
     loop.run();
     EXPECT_TRUE(completed);
 }
@@ -61,8 +61,8 @@ TEST(HttpRequestManager, UnpackHeaders) {
     HttpRequestManager<Ev> manager(provider);
     NetworkRequest request("http://httpbin.org/response-headers?X-My-Header=123");
     manager.get(request, [&completed](NetworkReply&& reply){
-        EXPECT_TRUE(reply.hasHeader("X-My-Header"));
-        EXPECT_STREQ("123", reply.getHeader("X-My-Header").c_str());
+        EXPECT_TRUE(reply.headers().has("X-My-Header"));
+        EXPECT_STREQ("123", reply.headers().get("X-My-Header").c_str());
         completed = true;
     });
     loop.run();
@@ -117,7 +117,7 @@ TEST(HttpRequestManager, Manual) {
     HttpRequestManager<Ev> manager(provider);
     manager.get("http://www.google.cn", [](NetworkReply&& reply){
         std::cout << "=== Response received:" << std::endl;
-        for (auto header : reply.headers)
+        for (auto header : reply.headers().all())
             std::cout << boost::format("%s : %s") % header.name % header.value << std::endl;
         std::cout << boost::format("Body: %s") % reply.body << std::endl;
     });

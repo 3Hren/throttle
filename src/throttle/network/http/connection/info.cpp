@@ -14,7 +14,7 @@ Info::Info(const NetworkRequest &request, const Callbacks &callbacks):
     curl_easy_setopt(easy, CURLOPT_NOSIGNAL, 1L);
     curl_easy_setopt(easy, CURLOPT_NOPROGRESS, 1L);
 
-    struct curl_slist *curl_headers = packHeaders(request.getHeaders());
+    struct curl_slist *curl_headers = packHeaders(request.headers().all());
     curl_easy_setopt(easy, CURLOPT_HTTPHEADER, curl_headers);
 
     curl_easy_setopt(easy, CURLOPT_HEADERFUNCTION, headerCallback);
@@ -76,16 +76,16 @@ size_t Info::headerCallback(char *data, size_t size, size_t nmemb, Info *info) {
         if (info->callbacks.onHeader) {
             info->callbacks.onHeader(header);
         }
-        info->reply.setHeader(std::move(header));
+        info->reply.headers().set(std::move(header));
     }
 
     return written;
 }
 
-curl_slist *Info::packHeaders(const std::unordered_map<std::string, std::string> &headers) const {
+curl_slist *Info::packHeaders(const std::list<Header> &headers) const {
     struct curl_slist *curl_headers = nullptr;
     for (auto it = headers.begin(); it != headers.end(); ++it) {
-        addHeader(it->first, it->second, &curl_headers);
+        addHeader(it->name, it->value, &curl_headers);
     }
     return curl_headers;
 }

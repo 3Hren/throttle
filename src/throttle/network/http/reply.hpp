@@ -7,18 +7,17 @@
 
 namespace throttle { namespace network { namespace http {
 
-struct NetworkReply {
-    std::list<Header> headers;
+class NetworkReply {
+public:
+    HeaderList headerList;
     std::string body;
 
     NetworkReply() = default;
     NetworkReply(const NetworkReply &other) = default;
     NetworkReply(NetworkReply &&other);
 
-    bool hasHeader(const std::string &name) const;
-    std::string getHeader(const std::string &name) const;
-    void setHeader(const Header &header);
-    void setHeader(Header &&header);
+    HeaderList &headers();
+    const HeaderList &headers() const;
 };
 
 } } }

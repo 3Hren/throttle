@@ -13,8 +13,24 @@ TEST(NetworkRequest, UrlGetSet) {
 
 TEST(NetworkRequest, HeaderGetSet) {
     NetworkRequest request;
-    EXPECT_FALSE(request.hasHeader("X-My-Header"));
-    request.setHeader("X-My-Header", "123");
-    EXPECT_TRUE(request.hasHeader("X-My-Header"));
-    EXPECT_STREQ(request.getHeader("X-My-Header").c_str(), "123");
+    EXPECT_FALSE(request.headers().has("X-My-Header"));
+    request.headers().set("X-My-Header", "123");
+    EXPECT_TRUE(request.headers().has("X-My-Header"));
+    EXPECT_STREQ(request.headers().get("X-My-Header").c_str(), "123");
+}
+
+TEST(NetworkRequest, ContentTypeHeaderGetSet) {
+    NetworkRequest request;
+    EXPECT_FALSE(request.headers().has<Header::ContentType>());
+    request.headers().set<Header::ContentType>("text/html");
+    EXPECT_TRUE(request.headers().has<Header::ContentType>());
+    EXPECT_STREQ(request.headers().get<Header::ContentType>().c_str(), "text/html");
+}
+
+TEST(NetworkRequest, ContentLengthHeaderGetSet) {
+    NetworkRequest request;
+    EXPECT_FALSE(request.headers().has<Header::ContentLength>());
+    request.headers().set<Header::ContentLength>(1024);
+    EXPECT_TRUE(request.headers().has<Header::ContentLength>());
+    EXPECT_EQ(request.headers().get<Header::ContentLength>(), 1024);
 }

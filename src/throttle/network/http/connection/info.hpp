@@ -30,7 +30,7 @@ struct Info {
 private:
     static size_t writeCallback(char *data, size_t size, size_t nmemb, connection::Info *info);
     static size_t headerCallback(char *data, size_t size, size_t nmemb, connection::Info *info);
-    struct curl_slist *packHeaders(const std::unordered_map<std::string, std::string> &headers) const;
+    struct curl_slist *packHeaders(const std::list<Header> &headers) const;
     void addHeader(const std::string &name, const std::string &value, struct curl_slist **headers) const;
 };
 
