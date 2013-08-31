@@ -63,52 +63,59 @@ struct ProtocolPair {
 
 namespace detail { namespace parse {
 
-enum Code {
-    NoErrors = 0,
-    NoProtocolFound
+struct state_t {
+    const size_t pos;
+    const protocol::type::Type current_protocol;
+
+    state_t(size_t pos = 0, protocol::type::Type current_protocol = protocol::type::Unknown) :
+        pos(pos),
+        current_protocol(current_protocol)
+    {}
 };
 
-struct state_t {
-    size_t pos;
-    protocol::type::Type current_protocol;
-    Code error_code;
+const std::list<ProtocolPair> PROTOCOLS_PAIR_LIST = {
+    ProtocolPair::make<protocol::Http>(),
+    ProtocolPair::make<protocol::Ftp>()
 };
+
+struct match_char_t {
+    const char *url;
+    size_t pos;
+
+    bool operator ()(const ProtocolPair &pair) const {
+        return url[pos] != pair.value[pos];
+    }
+};
+
+state_t compare_remaining(const char *url, size_t pos, ProtocolPair &&pair) {
+    const int len = std::strlen(pair.value);
+    if (std::strncmp(url + pos, pair.value + pos, len) == 0)
+        return state_t(len, pair.type);
+
+    return state_t();
+}
 
 state_t parse_protocol(const char *url, size_t size) {
-    state_t state { 0, protocol::type::Unknown, NoProtocolFound };
     LOG_DEBUG("%d vs %d", size, MIN_PROTOCOL_SIZE);
     if (size < MIN_PROTOCOL_SIZE)
-        return state;
+        return state_t();
 
-    std::list<ProtocolPair> protocols = {
-        ProtocolPair::make<protocol::Http>(),
-        ProtocolPair::make<protocol::Ftp>()
-    };
-
-    for (; state.pos < size; ++state.pos) {
-        protocols.remove_if([&url, &state, &protocols](const ProtocolPair &pair){
-            return url[state.pos] != pair.value[state.pos];
-        });
-        LOG_DEBUG("%d, %d", state.pos, protocols.size());
+    std::list<ProtocolPair> protocols = PROTOCOLS_PAIR_LIST;
+    size_t pos = 0;
+    while (pos < size) {
+        protocols.remove_if(match_char_t{ url, pos });
+        LOG_DEBUG("%d, %d", pos, protocols.size());
 
         if (protocols.empty()) {
-            LOG_DEBUG("no more protocols left, returning %d", state.pos);
-            return state;
+            LOG_DEBUG("no more protocols left, returning %d", pos);
+            return state_t();
         }
 
-        if (protocols.size() == 1) {
-            const ProtocolPair &pair = protocols.front();
-            const int len = std::strlen(pair.value);
-
-            if (std::strncmp(url + state.pos, pair.value + state.pos, len) == 0) {
-                state.pos = len;
-                state.current_protocol = pair.type;
-                state.error_code = NoErrors;
-            }
-            return state;
-        }
+        if (protocols.size() == 1)
+            return compare_remaining(url, pos, std::move(protocols.front()));
+        ++pos;
     }
-    return state;
+    return state_t();
 }
 
 state_t parse_protocol(const char *url) {
@@ -136,12 +143,11 @@ public:
 
     void parseAddress(const std::string &url) {
         protocol::detail::parse::state_t state = protocol::detail::parse::parse_protocol(url.data(), url.size());
-        LOG_DEBUG("%d. error_code? %s", state.pos, state.error_code);
-        if (state.error_code != protocol::detail::parse::NoErrors || state.pos == url.size())
+        LOG_DEBUG("%d. protocol: %s", state.current_protocol);
+        if (state.current_protocol == protocol::type::Unknown || state.pos == url.size())
             return;
 
         if (state.current_protocol == protocol::type::Http) {
-            state.pos += parseHostPort(url.data() + state.pos);
         }
     }
 
