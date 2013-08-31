@@ -7,9 +7,14 @@
 #include "utils.hpp"
 #include "url.hpp"
 
-namespace throttle { namespace network {
+// throttle -> detail -> uri -> parsers -> common
+// throttle -> detail -> uri -> parsers -> http
+// throttle -> detail -> uri -> parsers -> ftp
+
+namespace throttle { namespace detail { namespace uri {
 
 namespace protocol {
+
 namespace type {
 
 enum Type {
@@ -30,24 +35,10 @@ enum Type {
 
 DECLARE(Http,   type::Http,     "http://");
 DECLARE(Ftp,    type::Ftp,      "ftp://");
-//DECLARE(Afs,    type::Afs,      "afs://");
-//DECLARE(News,   type::News,     "news:");
-//DECLARE(Nttp,   "nttp:");
-//DECLARE(Mid,    "mid:");
-//DECLARE(Cid,    "cid:");
-//DECLARE(Mailto, "mailto:");
-//DECLARE(Wais,   "wais://");
 
 constexpr int MIN_PROTOCOL_SIZE = helpers::Min<
         protocol::Http,
         protocol::Ftp
-//        protocol::Afs,
-//        protocol::News,
-//        protocol::Nttp,
-//        protocol::Mid,
-//        protocol::Cid,
-//        protocol::Mailto,
-//        protocol::Wais
     >::value;
 
 struct ProtocolPair {
@@ -60,8 +51,14 @@ struct ProtocolPair {
     }
 };
 
+const std::list<ProtocolPair> PROTOCOLS_PAIR_LIST = {
+    ProtocolPair::make<protocol::Http>(),
+    ProtocolPair::make<protocol::Ftp>()
+};
 
-namespace detail { namespace parse {
+namespace parsers {
+
+namespace common {
 
 struct state_t {
     const size_t pos;
@@ -73,11 +70,6 @@ struct state_t {
     {}
 };
 
-const std::list<ProtocolPair> PROTOCOLS_PAIR_LIST = {
-    ProtocolPair::make<protocol::Http>(),
-    ProtocolPair::make<protocol::Ftp>()
-};
-
 struct match_char_t {
     const char *url;
     size_t pos;
@@ -87,7 +79,7 @@ struct match_char_t {
     }
 };
 
-state_t compare_remaining(const char *url, size_t pos, ProtocolPair &&pair) {
+state_t compare_remaining_characters(const char *url, size_t pos, ProtocolPair &&pair) {
     const int len = std::strlen(pair.value);
     if (std::strncmp(url + pos, pair.value + pos, len) == 0)
         return state_t(len, pair.type);
@@ -96,7 +88,6 @@ state_t compare_remaining(const char *url, size_t pos, ProtocolPair &&pair) {
 }
 
 state_t parse_protocol(const char *url, size_t size) {
-    LOG_DEBUG("%d vs %d", size, MIN_PROTOCOL_SIZE);
     if (size < MIN_PROTOCOL_SIZE)
         return state_t();
 
@@ -104,15 +95,12 @@ state_t parse_protocol(const char *url, size_t size) {
     size_t pos = 0;
     while (pos < size) {
         protocols.remove_if(match_char_t{ url, pos });
-        LOG_DEBUG("%d, %d", pos, protocols.size());
 
-        if (protocols.empty()) {
-            LOG_DEBUG("no more protocols left, returning %d", pos);
+        if (protocols.empty())
             return state_t();
-        }
 
         if (protocols.size() == 1)
-            return compare_remaining(url, pos, std::move(protocols.front()));
+            return compare_remaining_characters(url, pos, std::move(protocols.front()));
         ++pos;
     }
     return state_t();
@@ -122,9 +110,9 @@ state_t parse_protocol(const char *url) {
     return parse_protocol(url, std::strlen(url));
 }
 
-} } } // namespace protocol::detail::parse
+} } } // namespace protocol::parsers::common
 
-class Url::UrlImpl {
+class UrlImpl {
 
 public:
     bool valid;
@@ -142,7 +130,7 @@ public:
     }
 
     void parseAddress(const std::string &url) {
-        protocol::detail::parse::state_t state = protocol::detail::parse::parse_protocol(url.data(), url.size());
+        protocol::parsers::common::state_t state = protocol::parsers::common::parse_protocol(url.data(), url.size());
         LOG_DEBUG("%d. protocol: %s", state.current_protocol);
         if (state.current_protocol == protocol::type::Unknown || state.pos == url.size())
             return;
@@ -157,4 +145,4 @@ public:
     }
 };
 
-} }
+} } } // namespace throttle::detail::uri

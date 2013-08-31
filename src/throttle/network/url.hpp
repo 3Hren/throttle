@@ -2,11 +2,16 @@
 
 #include <string>
 
-namespace throttle { namespace network {
+namespace throttle {
+
+namespace detail { namespace uri {
+class UrlImpl;
+} }
+
+namespace network {
 
 class Url {
-    class UrlImpl;
-    const std::unique_ptr<UrlImpl> d;
+    const std::unique_ptr<detail::uri::UrlImpl> d;
 public:
     Url();
     Url(const std::string &url);
