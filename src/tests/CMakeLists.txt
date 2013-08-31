@@ -11,9 +11,10 @@ SET(HEADERS
 
 SET(SOURCES
     main.cpp
-    test_NetworkRequest.cpp
-    test_AsyncRequest.cpp
-    test_Manual.cpp
+#    test_NetworkRequest.cpp
+#    test_AsyncRequest.cpp
+#    test_Manual.cpp
+    test_Url.cpp
 )
 
 SET(BOOST_COMPONENTS

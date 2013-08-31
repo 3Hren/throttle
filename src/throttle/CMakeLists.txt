@@ -10,6 +10,8 @@ SET(HEADERS
     event/timer.hpp
     event/watcher.hpp
     event/provider/ev.hpp
+    network/url.hpp
+    network/url_p.hpp
     network/http/connection/info.hpp
     network/http/callbacks.hpp
     network/http/header.hpp
@@ -20,6 +22,7 @@ SET(HEADERS
 )
 
 SET(SOURCES
+    network/url.cpp
     network/http/connection/info.cpp
     network/http/header.cpp
     network/http/request.cpp

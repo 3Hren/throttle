@@ -52,4 +52,35 @@ inline std::string trimmed(const char *begin, const char *end) {
     return std::string(begin, end);
 }
 
+template<typename T, size_t N>
+constexpr int static_strlen(const T (&)[N]) {
+    return N - 1;
+}
+
+template<typename... Rest>
+struct Min;
+
+template<typename M>
+struct Min<M> {
+    enum { value = static_strlen(M::value) };
+};
+
+template<typename M, typename First>
+struct Min<M, First> {
+    enum {
+        value = static_strlen(First::value) < static_strlen(M::value) ?
+        Min<First>::value :
+        Min<M>::value
+    };
+};
+
+template<typename M, typename First, typename... Rest>
+struct Min<M, First, Rest...> {
+    enum {
+        value = static_strlen(First::value) < static_strlen(M::value) ?
+        Min<First, Rest...>::value :
+        Min<M, Rest...>::value
+    };
+};
+
 }

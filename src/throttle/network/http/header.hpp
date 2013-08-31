@@ -41,7 +41,7 @@ struct HeaderName {
 class HeaderList {
 public:
     struct Container {
-        typedef typename std::list<Header> Type;
+        typedef std::list<Header> Type;
     };
 
 private:
