@@ -110,7 +110,32 @@ state_t parse_protocol(const char *url) {
     return parse_protocol(url, std::strlen(url));
 }
 
-} } } // namespace protocol::parsers::common
+} // namespace common
+
+namespace http {
+
+struct state_t {
+    size_t pos;
+    bool valid;
+};
+
+state_t parse_host(const char *url, size_t size) {
+    int pos = 0;
+    while (pos < size) {
+
+        ++pos;
+    }
+
+    return state_t();
+}
+
+state_t parse_host(const char *url) {
+    return parse_host(url, std::strlen(url));
+}
+
+} // namespace http
+
+} } // namespace protocol::parsers
 
 class UrlImpl {
 

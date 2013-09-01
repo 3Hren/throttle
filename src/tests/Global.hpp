@@ -19,9 +19,5 @@ using namespace ::testing;
 #include "network/http/reply.hpp"
 #include "network/http/manager.hpp"
 
-using namespace throttle::network;
-using namespace throttle::network::http;
-using namespace throttle::event::provider;
-
 #define TEST_OFF(__case__, __name__) \
     TEST(__case__, DISABLED_##__name__)
